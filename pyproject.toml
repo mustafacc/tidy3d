@@ -38,7 +38,22 @@ dependencies = [
   "boto3>=1.28.0,<2.0.0",
   "requests>=2.31.0,<3.0.0",
   "pyjwt>=2.10.1,<3.0.0",
+  # cryptography 49.0.0 dropped Intel-macOS wheel builds (arm64-only since), so
+  # 48.0.1 is the newest version installable there without a Rust toolchain -
+  # this pin is real, not stale. It must stay an EXACT pin scoped to that one
+  # platform+arch pair. The floor below is deliberately >=50.0.0 (not just any
+  # newer version): unified/universal resolvers (uv, Poetry/PDM universal
+  # mode) only fork a package's resolution per marker when no single version
+  # can satisfy every branch at once - a floor like >=44.0.0 is still
+  # satisfied by 48.0.1, so the resolver happily reuses 48.0.1 everywhere and
+  # the Darwin/x86_64 scoping is silently defeated (confirmed: it was on this
+  # project's own committed uv.lock, which had ONE cryptography==48.0.1 entry
+  # covering every platform). >=50.0.0 is incompatible with 48.0.1, which
+  # forces the fork the marker was supposed to produce, and it also clears
+  # every one of GHSA-g6cj-pr64-35w5 (CVE-2026-69247/69248/69249) rather than
+  # just the two that a lower floor would.
   "cryptography==48.0.1; platform_system == 'Darwin' and platform_machine == 'x86_64'",
+  "cryptography>=50.0.0; platform_system != 'Darwin' or platform_machine != 'x86_64'",
   "click>=8.1.0,<9.0.0",
   "responses>=0.25.8,<0.27.0",
   "joblib>=1.5.3,<2.0.0",
